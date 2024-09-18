@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rental_app_system/screens/home_screen.dart';
 import 'package:rental_app_system/screens/my_rental.dart';
 import 'package:rental_app_system/services/firebase_service.dart';
 import 'package:rental_app_system/screens/login_screen.dart';
@@ -7,6 +8,7 @@ import '../screens/houses_list.dart';
 import '../screens/my_tenants.dart';
 import '../screens/report_screen.dart';
 import '../screens/users_list.dart';
+import '../screens/user_profile_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   final int userRole;
@@ -31,9 +33,23 @@ class CustomDrawer extends StatelessWidget {
         if (userRole == 1) ..._buildAdminMenuItems(context),
         if (userRole == 2) ..._buildLandlordMenuItems(context),
         if (userRole == 3) ..._buildTenantMenuItems(context),
+        _buildUserProfileTile(context),
         const Divider(),
         _buildLogoutTile(context),
       ],
+    );
+  }
+
+  Widget _buildUserProfileTile(BuildContext context) {
+    return ListTile(
+      leading: Icon(Icons.person, color: Theme.of(context).primaryColor),
+      title:
+          Text('User Profile', style: TextStyle(fontWeight: FontWeight.w500)),
+      onTap: () {
+        Navigator.pop(context);
+        _navigateTo(context,
+            UserProfileScreen()); // Assuming you have a UserProfileScreen
+      },
     );
   }
 
@@ -95,7 +111,7 @@ class CustomDrawer extends StatelessWidget {
       context,
       [
         MenuItem(Icons.dashboard_outlined, 'Dashboard',
-            () => Navigator.pop(context)),
+            () => _navigateTo(context, HomeScreen(userRole: userRole))),
         MenuItem(Icons.home_outlined, 'List of Houses',
             () => _navigateTo(context, HousesList(userRole: userRole))),
         MenuItem(Icons.category_outlined, 'List of House Types',
@@ -113,7 +129,7 @@ class CustomDrawer extends StatelessWidget {
       context,
       [
         MenuItem(Icons.dashboard_outlined, 'Dashboard',
-            () => Navigator.pop(context)),
+            () => _navigateTo(context, HomeScreen(userRole: userRole))),
         MenuItem(Icons.home_outlined, 'My Houses',
             () => _navigateTo(context, HousesList(userRole: userRole))),
         MenuItem(Icons.people_outline, 'My Tenants',

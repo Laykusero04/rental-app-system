@@ -18,6 +18,7 @@ class _MyRentalState extends State<MyRental> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title:
             Text('My Rentals', style: TextStyle(fontWeight: FontWeight.bold)),

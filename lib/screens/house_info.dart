@@ -34,7 +34,12 @@ class _HouseInfoState extends State<HouseInfo>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text('House Details',
             style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
@@ -89,100 +94,216 @@ class _HouseInfoState extends State<HouseInfo>
 
         var houseData = snapshot.data!.data() as Map<String, dynamic>;
 
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (houseData['imageUrl'] != null)
-                AspectRatio(
-                  aspectRatio: 16 / 9, // Adjust this ratio as needed
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(houseData['imageUrl']),
-                        fit: BoxFit.cover,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth > 600) {
+              // Web layout
+              return _buildWebLayout(houseData);
+            } else {
+              // Mobile layout
+              return _buildMobileLayout(houseData);
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildWebLayout(Map<String, dynamic> houseData) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 1,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.network(
+                  houseData['imageUrl'] ??
+                      'https://via.placeholder.com/400x300',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'House #: ${houseData['houseNumber']}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'House Type: ${houseData['houseType']}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Description:',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Text(houseData['description']),
+                  SizedBox(height: 16),
+                  Text(
+                    'Price: ${_formatPrice(houseData['price'])}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(color: Colors.green),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Contact: ${houseData['contactNumber'] ?? 'N/A'}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  SizedBox(height: 16),
+                  FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(houseData['createdBy'])
+                        .get(),
+                    builder: (context, userSnapshot) {
+                      if (userSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Text('Created by: Loading...');
+                      }
+                      if (userSnapshot.hasError || !userSnapshot.hasData) {
+                        return Text('Created by: Unknown');
+                      }
+                      var userData =
+                          userSnapshot.data!.data() as Map<String, dynamic>;
+                      return Text(
+                        'Created by: ${userData['first_name']} ${userData['last_name']}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      );
+                    },
+                  ),
+                  SizedBox(height: 24),
+                  if (widget.userRole == 3) // Only show for tenants
+                    ElevatedButton(
+                      onPressed: () => _requestAccess(context),
+                      child: Text('Request Access to Transaction History'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(Map<String, dynamic> houseData) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Image.network(
+              houseData['imageUrl'] ?? 'https://via.placeholder.com/400x300',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'House #: ${houseData['houseNumber']}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'House Type: ${houseData['houseType']}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Description:',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Text(houseData['description']),
+                SizedBox(height: 16),
+                Text(
+                  'Price: ${_formatPrice(houseData['price'])}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: Colors.green),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Contact: ${houseData['contactNumber'] ?? 'N/A'}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                SizedBox(height: 16),
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(houseData['createdBy'])
+                      .get(),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Text('Created by: Loading...');
+                    }
+                    if (userSnapshot.hasError || !userSnapshot.hasData) {
+                      return Text('Created by: Unknown');
+                    }
+                    var userData =
+                        userSnapshot.data!.data() as Map<String, dynamic>;
+                    return Text(
+                      'Created by: ${userData['first_name']} ${userData['last_name']}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    );
+                  },
+                ),
+                SizedBox(height: 24),
+                if (widget.userRole == 3) // Only show for tenants
+                  ElevatedButton(
+                    onPressed: () => _requestAccess(context),
+                    child: Text('Request Access to Transaction History'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'House #: ${houseData['houseNumber']}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'House Type: ${houseData['houseType']}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Description:',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    Text(houseData['description']),
-                    SizedBox(height: 16),
-                    Text(
-                      'Price: ${_formatPrice(houseData['price'])}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(color: Colors.green),
-                    ),
-                    SizedBox(height: 16),
-                    FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(houseData['createdBy'])
-                          .get(),
-                      builder: (context, userSnapshot) {
-                        if (userSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Text('Created by: Loading...');
-                        }
-                        if (userSnapshot.hasError || !userSnapshot.hasData) {
-                          return Text('Created by: Unknown');
-                        }
-                        var userData =
-                            userSnapshot.data!.data() as Map<String, dynamic>;
-                        return Text(
-                          'Created by: ${userData['first_name']} ${userData['last_name']}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        );
-                      },
-                    ),
-                    SizedBox(height: 24),
-                    if (widget.userRole == 3) // Only show for tenants
-                      ElevatedButton(
-                        onPressed: () => _requestAccess(context),
-                        child: Text('Request Access to Transaction History'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -441,21 +562,6 @@ class _HouseInfoState extends State<HouseInfo>
     }
   }
 
-  void _denyRequest(String requestId) {
-    FirebaseFirestore.instance
-        .collection('accessRequests')
-        .doc(requestId)
-        .update({'status': 'denied'}).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Request denied')),
-      );
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to deny request: $error')),
-      );
-    });
-  }
-
   void _requestAccess(BuildContext context) async {
     try {
       User? currentUser = FirebaseAuth.instance.currentUser;
@@ -478,5 +584,20 @@ class _HouseInfoState extends State<HouseInfo>
         SnackBar(content: Text('Failed to submit request: $e')),
       );
     }
+  }
+
+  void _denyRequest(String requestId) {
+    FirebaseFirestore.instance
+        .collection('accessRequests')
+        .doc(requestId)
+        .update({'status': 'denied'}).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Request denied')),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to deny request: $error')),
+      );
+    });
   }
 }

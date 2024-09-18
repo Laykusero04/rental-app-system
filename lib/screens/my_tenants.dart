@@ -17,6 +17,7 @@ class _MyTenantsState extends State<MyTenants> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('My Tenants'),
         elevation: 0,

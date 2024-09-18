@@ -24,6 +24,7 @@ class _HousesListState extends State<HousesList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: widget.userRole != 3
           ? AppBar(
               title:
@@ -115,6 +116,7 @@ class _HousesListState extends State<HousesList> {
                             price: house['price'],
                             createdBy: house['createdBy'],
                             imageUrl: house['imageUrl'],
+                            contactNumber: _getContactNumber(house),
                             onEdit: widget.userRole != 3
                                 ? () => _editHouse(house.id,
                                     house.data() as Map<String, dynamic>)
@@ -144,6 +146,7 @@ class _HousesListState extends State<HousesList> {
                             price: house['price'],
                             createdBy: house['createdBy'],
                             imageUrl: house['imageUrl'],
+                            contactNumber: _getContactNumber(house),
                             onEdit: widget.userRole != 3
                                 ? () => _editHouse(house.id,
                                     house.data() as Map<String, dynamic>)
@@ -166,13 +169,23 @@ class _HousesListState extends State<HousesList> {
       floatingActionButton: widget.userRole != 3
           ? FloatingActionButton.extended(
               onPressed: () {
-                // Navigate to AddHouse screen
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => AddHouse()));
               },
               icon: Icon(Icons.add),
               label: Text('Add House'),
             )
           : null,
     );
+  }
+
+  String _getContactNumber(DocumentSnapshot house) {
+    try {
+      return house['contactNumber'] ?? 'N/A';
+    } catch (e) {
+      print('Error getting contact number: $e');
+      return 'N/A';
+    }
   }
 
   Stream<QuerySnapshot> _getFilteredHousesStream() {
@@ -230,6 +243,7 @@ class HouseItem extends StatelessWidget {
   final String price;
   final String createdBy;
   final String? imageUrl;
+  final String contactNumber;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final int userRole;
@@ -243,6 +257,7 @@ class HouseItem extends StatelessWidget {
     required this.price,
     required this.createdBy,
     this.imageUrl,
+    required this.contactNumber,
     this.onEdit,
     this.onDelete,
     required this.userRole,
@@ -284,6 +299,8 @@ class HouseItem extends StatelessWidget {
                   _buildInfoRow(Icons.description, description),
                   SizedBox(height: 4),
                   _buildInfoRow(Icons.attach_money, price),
+                  SizedBox(height: 4),
+                  _buildInfoRow(Icons.phone, contactNumber),
                   if (userRole != 2) SizedBox(height: 4),
                   if (userRole != 2) _buildCreatedBy(),
                 ],

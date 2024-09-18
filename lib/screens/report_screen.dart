@@ -112,7 +112,7 @@ class _ReportScreenState extends State<ReportScreen>
               pw.Table.fromTextArray(
                 context: context,
                 data: <List<String>>[
-                  <String>['Name', 'House #', 'Date', 'Invoice', 'Amount'],
+                  <String>['Name', 'House #', 'Date', 'Amount'],
                   ...payments.map((data) {
                     return [
                       data['tenantName']?.toString() ?? 'N/A',
@@ -167,6 +167,7 @@ class _ReportScreenState extends State<ReportScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('Reports', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
